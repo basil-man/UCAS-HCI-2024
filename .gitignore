@@ -1,0 +1,7 @@
+checkpoint/
+dataset/
+demo/output/
+**/__pycache__
+*.mp4
+*.xml
+*.iml

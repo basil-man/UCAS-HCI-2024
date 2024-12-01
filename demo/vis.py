@@ -291,3 +291,8 @@ if __name__ == "__main__":
     print('Generating demo successful!')
 
 
+        "demo/output/deadlift/output_3D/output_keypoints_3d.npz",
+        "demo/output/my_deadlift_3/output_3D/output_keypoints_3d.npz",
+        "demo/video/deadlift.mp4",
+        "demo/video/my_deadlift_3.mp4",
+        "align/comparison_aligned.mp4",
