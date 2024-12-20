@@ -273,7 +273,7 @@ def get_pose3D(video_path, output_dir):
         os.makedirs(output_dir_pose, exist_ok=True)
         plt.savefig(output_dir_pose + str(('%04d'% i)) + '_pose.png', dpi=200, bbox_inches = 'tight')
 
-if __name__ == "__main__":
+def generate():
     parser = argparse.ArgumentParser()
     parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
     parser.add_argument('--gpu', type=str, default='0', help='input video')
@@ -290,9 +290,19 @@ if __name__ == "__main__":
     img2video(video_path, output_dir)
     print('Generating demo successful!')
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
+    parser.add_argument('--gpu', type=str, default='0', help='input video')
+    args = parser.parse_args()
 
-        "demo/output/deadlift/output_3D/output_keypoints_3d.npz",
-        "demo/output/my_deadlift_3/output_3D/output_keypoints_3d.npz",
-        "demo/video/deadlift.mp4",
-        "demo/video/my_deadlift_3.mp4",
-        "align/comparison_aligned.mp4",
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+    video_path = './demo/video/' + args.video
+    video_name = video_path.split('/')[-1].split('.')[0]
+    output_dir = './demo/output/' + video_name + '/'
+
+    get_pose2D(video_path, output_dir)
+    get_pose3D(video_path, output_dir)
+    img2video(video_path, output_dir)
+    print('Generating demo successful!')
