@@ -273,7 +273,7 @@ def get_pose3D(video_path, output_dir):
         os.makedirs(output_dir_pose, exist_ok=True)
         plt.savefig(output_dir_pose + str(('%04d'% i)) + '_pose.png', dpi=200, bbox_inches = 'tight')
 
-def generate():
+def generate(input):
     parser = argparse.ArgumentParser()
     parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
     parser.add_argument('--gpu', type=str, default='0', help='input video')
@@ -281,7 +281,7 @@ def generate():
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
-    video_path = './demo/video/' + args.video
+    video_path = input
     video_name = video_path.split('/')[-1].split('.')[0]
     output_dir = './demo/output/' + video_name + '/'
 

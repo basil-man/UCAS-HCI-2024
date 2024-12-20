@@ -21,7 +21,7 @@ def test_block_pose():
 
 class PoseEstimation():
     def __call__(self, input):
-        generate()
+        generate(input)
         return './demo/output/sample_video/output_video.mp4'
 
 
@@ -35,13 +35,25 @@ class Analysis():
             return benchpress_pose()
         else:
             return test_block_pose()
-
-if __name__ == "__main__":
+        
+def analyze_video(video_path,mode):
     # 创建 PoseEstimation 类的实例
-
+    pose_estimation = PoseEstimation()
 
     # 调用实例，就像调用函数一样
-    input_data = "some_input_data"
+    input_data = video_path
+    pose_estimation(input_data)
+
+    analysis = Analysis()
+    
+    return analysis(mode)
+
+if __name__ == "__main__":
+     # 创建 PoseEstimation 类的实例
+    pose_estimation = PoseEstimation()
+
+    # 调用实例，就像调用函数一样
+    input_data = './demo/video/sample_video.mp4'
     
 
     analysis = Analysis()
