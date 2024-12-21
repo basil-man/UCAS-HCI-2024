@@ -1,66 +1,63 @@
 import argparse
-import sys
 import os
+import sys
+import time
 
+# 添加当前目录和 demo 子目录到路径
 sys.path.append(os.getcwd())
-current_dir = os.getcwd()
-# 构建要添加的目录路径
-demo_dir = os.path.join(current_dir, 'demo')
-
-# 将指定目录添加到 sys.path 中
+demo_dir = os.path.join(os.getcwd(), 'demo')
 sys.path.append(demo_dir)
+
 from demo.vis import generate
 from deadlift import test_spike_pose as deadlift_pose
 from benchpress import test_spike_pose as benchpress_pose
-from deepsquat import test_spike_pose as deepsquat_pose
-import time
+from deepsquat import test_squat_pose as deepsquat_pose
+
+# Function definitions
 
 def test_block_pose():
+    """Fallback analysis function."""
     return "1"
 
+class PoseEstimation:
+    """Handles pose estimation."""
+    def __call__(self, video_path):
+        processed_video_path = generate(video_path)
+        return processed_video_path
 
-class PoseEstimation():
-    def __call__(self, input):
-        generate(input)
-        return './demo/output/sample_video/output_video.mp4'
-
-
-class Analysis():
+class Analysis:
+    """Performs analysis based on mode."""
     def __call__(self, mode):
         if mode == "硬拉":
             return deadlift_pose()
-        elif mode == "深蹲":
+        elif mode == "deep_squat":
             return deepsquat_pose()
         elif mode == "卧推":
             return benchpress_pose()
         else:
             return test_block_pose()
-        
-def analyze_video(video_path,mode):
-    # 创建 PoseEstimation 类的实例
-    pose_estimation = PoseEstimation()
 
-    # 调用实例，就像调用函数一样
-    input_data = video_path
-    pose_estimation(input_data)
+def analyze_video(video_path, mode):
+    """Runs pose estimation and analysis."""
+    pose_estimation = PoseEstimation()
+    pose_estimation(video_path)
 
     analysis = Analysis()
-    
     return analysis(mode)
 
+# Main script execution
 if __name__ == "__main__":
-     # 创建 PoseEstimation 类的实例
-    pose_estimation = PoseEstimation()
-
-    # 调用实例，就像调用函数一样
-    input_data = './demo/video/sample_video.mp4'
-    
-
-    analysis = Analysis()
+    # Command-line argument parsing
     parser = argparse.ArgumentParser(description="Pose Estimation Analysis")
-    parser.add_argument("mode", type=str, help="The mode of analysis (e.g., 硬拉, 深蹲, 卧推)")
+    parser.add_argument("mode", type=str, help="The mode of analysis (e.g., 硬拉, deep_squat, 卧推)")
+    parser.add_argument(
+        "--video", type=str, default="./demo/video/sample_video.mp4", help="Path to the input video"
+    )
     args = parser.parse_args()
-    
-    print(analysis(args.mode))
-    
 
+    # Start processing
+    print("Starting pose estimation and analysis...")
+    result = analyze_video(args.video, args.mode)
+
+    # Output the result
+    print("Analysis result:", result)
