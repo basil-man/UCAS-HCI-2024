@@ -111,6 +111,7 @@ def img2video(video_path, output_dir):
     img = cv2.imread(names[0])
     size = (img.shape[1], img.shape[0])
 
+    video_name = video_path.split('/')[-1].split('.')[0]
     videoWrite = cv2.VideoWriter(output_dir + video_name + '.mp4', fourcc, fps, size) 
 
     for name in names:
@@ -135,13 +136,14 @@ def get_pose3D(video_path, output_dir):
     args.n_joints, args.out_joints = 17, 17
 
     ## Reload 
-    model = Model(args).cuda()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = Model(args).to(device)
 
     model_dict = model.state_dict()
     # Put the pretrained model of MHFormer in 'checkpoint/pretrained/351'
     model_path = sorted(glob.glob(os.path.join(args.previous_dir, '*.pth')))[0]
 
-    pre_dict = torch.load(model_path)
+    pre_dict = torch.load(model_path, map_location=torch.device('cpu'))
     for name, key in model_dict.items():
         model_dict[name] = pre_dict[name]
     model.load_state_dict(model_dict)
@@ -188,7 +190,11 @@ def get_pose3D(video_path, output_dir):
         
         input_2D = input_2D[np.newaxis, :, :, :, :]
 
-        input_2D = torch.from_numpy(input_2D.astype('float32')).cuda()
+        # 检查是否有 CUDA 可用
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        # 将 input_2D 移动到适当的设备
+        input_2D = torch.from_numpy(input_2D.astype('float32')).to(device)
 
         N = input_2D.size(0)
 
@@ -274,12 +280,7 @@ def get_pose3D(video_path, output_dir):
         plt.savefig(output_dir_pose + str(('%04d'% i)) + '_pose.png', dpi=200, bbox_inches = 'tight')
 
 def generate(input):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
-    parser.add_argument('--gpu', type=str, default='0', help='input video')
-    args = parser.parse_args()
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
     video_path = input
     video_name = video_path.split('/')[-1].split('.')[0]

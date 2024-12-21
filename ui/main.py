@@ -32,7 +32,7 @@ class Analysis():
         elif mode == "深蹲":
             return deepsquat_pose()
         elif mode == "卧推":
-            return benchpress_pose()
+            return benchpress_pose(0)
         else:
             return test_block_pose()
         
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     # 调用实例，就像调用函数一样
     input_data = './demo/video/sample_video.mp4'
-    
+    pose_estimation(input_data)
 
     analysis = Analysis()
     parser = argparse.ArgumentParser(description="Pose Estimation Analysis")
