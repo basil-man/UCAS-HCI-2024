@@ -280,7 +280,13 @@ def get_pose3D(video_path, output_dir):
         plt.savefig(output_dir_pose + str(('%04d'% i)) + '_pose.png', dpi=200, bbox_inches = 'tight')
 
 def generate(input):
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
+    parser.add_argument('--gpu', type=str, default='0', help='input video')
+    parser.add_argument('--mode', type=str, default='deep_squat', help="The mode of analysis (e.g., 硬拉, deep_squat, 卧推)")
+    args = parser.parse_args()
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
 
     video_path = input
     video_name = video_path.split('/')[-1].split('.')[0]
@@ -289,12 +295,17 @@ def generate(input):
     get_pose2D(video_path, output_dir)
     get_pose3D(video_path, output_dir)
     img2video(video_path, output_dir)
-    print('Generating demo successful!')
+
+    # 返回生成的视频路径
+    processed_video_path = output_dir + video_name + '.mp4'
+    print('Generating demo successful! Processed video saved at:', processed_video_path)
+    return processed_video_path
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--video', type=str, default='sample_video.mp4', help='input video')
     parser.add_argument('--gpu', type=str, default='0', help='input video')
+    parser.add_argument('--mode', type=str, default='deep_squat', help="The mode of analysis (e.g., 硬拉, deep_squat, 卧推)")
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
