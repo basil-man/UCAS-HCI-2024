@@ -6,147 +6,229 @@ def test_spike_pose():
     keypoints_2d = np.load(output_dir + 'input_2D/keypoints.npz', allow_pickle=True)['reconstruction']
     keypoints_3d = np.load(output_dir + 'output_3D/output_keypoints_3d.npz', allow_pickle=True)['reconstruction']
 
-    head_height = keypoints_2d[0,: , 10, 1] #额头的y坐标
-    highest_idx = np.argmin(head_height) #找出头关节点最高的帧作为分析的目标帧
-    larm_height = keypoints_2d[0,: , 13, 1] #额头的y坐标
-    larm_highest_idx = np.argmin(larm_height)
-    horizon_idx = highest_idx
-    for i in range(keypoints_2d.shape[1]):
-        if (i > highest_idx and keypoints_2d[0, i - 1, 16, 1] < keypoints_2d[0, i - 1, 14, 1] and keypoints_2d[0, i, 16, 1] > keypoints_2d[0, i, 14, 1]):
-            horizon_idx = i
-            break
-    #print("highest_idx is ",highest_idx,"horizon_idx is ",horizon_idx)
-    if(highest_idx == horizon_idx):
-        return "扣球动作不完整，视频录制过短，请重新录制视频，确保上传完整的扣球动作！"
+    start_idx = -1
+    highest_idx = -1
+    finish_idx = -1
+    right_elbow_angle_m = 180
+    left_elbow_angle_m = 180
+    for i in range(keypoints_3d.shape[0]):
+        if(i>start_idx and highest_idx == -1):
+            kpt = keypoints_3d[i, :, :]
+            right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
+            if(right_elbow_angle < 175 or left_elbow_angle < 175):
+                continue
+            else:
+                highest_idx = i
+        if(i>highest_idx and highest_idx > 0):
+            kpt = keypoints_3d[i, :, :]
+            right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
+            if(right_elbow_angle < 150 and left_elbow_angle < 150 and right_elbow_angle < right_elbow_angle_m and left_elbow_angle < left_elbow_angle_m):
+                right_elbow_angle_m = right_elbow_angle
+                left_elbow_angle_m = left_elbow_angle
+                finish_idx = i
+            elif(right_elbow_angle > right_elbow_angle_m + 10 or left_elbow_angle > left_elbow_angle_m + 10):
+                break  
 
-    head_highest = keypoints_3d[highest_idx, :, :]
-    rarm_horizon = keypoints_3d[horizon_idx, :, :]
-    larm_highest = keypoints_3d[larm_highest_idx, :, :]
+        
+    #print("highest_idx is ",highest_idx,"horizon_idx is ",horizon_idx)
+    if(highest_idx == -1 or finish_idx == -1):
+        return "卧推动作不完整，视频录制过短，请重新录制视频，确保上传完整的卧推动作！"
+
+    highesttime = keypoints_3d[highest_idx, :, :]
+    finishtime = keypoints_3d[finish_idx, :, :]
+    
+    uptime = highest_idx
+    downtime = finish_idx
+    if uptime > 3*downtime :
+        return "卧推下降速度过快，可能会导致肩膀受伤，请注意控制下降速度，保持动作标准。"
+    if downtime > 3*uptime :
+        return "卧推上升速度过快，可能会导致肩膀受伤，请注意控制上升速度，保持动作标准。"
     #输入hkpt和lkpt是二维数组，第一维为时间帧，第二维为坐标 (x, y, z)
     #x表示横向，右手为负，y表示纵向高度，越高值越小，z表示前后，越靠前值越小
     #print(hkpt)
     #print(lkpt)
     #目的是通过test_highest_info和test_arm_speed的返回值比对标准姿势和测试姿势的差别
-    hh_diff,hh_angle = test_height_info(head_highest) #head_highest_diffenence_height
-    lh_diff,lh_angle = test_height_info(larm_highest) #leftarm_highest_difference_height
-
+    right_elbow_angle,left_elbow_angle =  test_arm_straight(finishtime) #head_highest_diffenence_height
+    elbow_angle = (right_elbow_angle + left_elbow_angle) / 2
+    knee_angle = test_leg_pose(highesttime) #leftarm_highest_difference_height
+    hand_eye = test_hand_eye(finishtime)
+    arm_angle = test_arm_angle(finishtime)
     #print("athlete5 standard pose info: \nlh_diff:", lh_diff, "\tlh_angle:", lh_angle)
     #print("hh_diff:", hh_diff, "\thh_angle:", hh_angle)
+    hand_track = test_hand_track(highest_idx,finish_idx,keypoints_3d)
+    
 
-    arm_speed = horizon_idx - highest_idx
-    arm_angle, elbow_angle = test_arm_angle(rarm_horizon)
-    #print("arm_angle:", arm_angle, "\telbow_angle:", elbow_angle)
-    lh_diff_data = np.array([0.43961883, 0.43432528, 0.46093467, 0.3813015, 0.5607993])
-    lh_angle_data = np.array(
-        [15.486222981654413, 13.963960893721094, 17.062048958111383, 20.00910511506328, 9.218777294398617])
-    hh_diff_data = np.array([0.50280684, 0.40918744, 0.4581399, 0.41242406, 0.6121681])
-    hh_angle_data = np.array(
-        [12.169783346599294, 12.971947464571311, 12.553325166719885, 18.25228174757277, 8.942303846331004])
-    arm_angle_data = np.array(
-        [11.69741786895216, 2.5779226241489153, 4.747299987571686, 24.00741516700715, 19.511018257477506])
-    elbow_angle_data = np.array([87.74351, 75.067867, 68.095764, 69.01098, 61.46978])
+    elbow_angle_data = np.array([90, 80, 95, 100, 105])
+    knee_angle_data = np.array([100,120,125,95,110,115,105])
+    hand_eye_data = np.array([0.25,0.3,0.2,0.15,0.4,0.15])
+    arm_angle_data = np.array([120,130,150,160,140,140,130])
+    hand_track = np.array([0.1,0.2,0.3,0.2,0.3,0.4,0,3,0.2,0.15])
     # 计算均值
-    lh_diff_mean = np.mean(lh_diff_data)
-    # 计算方差
-    lh_diff_var = np.var(lh_diff_data)
-
-    lh_angle_mean = np.mean(lh_angle_data)
-    lh_angle_var = np.var(lh_angle_data)
-    hh_diff_mean = np.mean(hh_diff_data)
-    hh_diff_var = np.var(hh_diff_data)
-    hh_angle_mean = np.mean(hh_angle_data)
-    hh_angle_var = np.var(hh_angle_data)
-    arm_angle_mean = np.mean(arm_angle_data)
-    arm_angle_var = np.var(arm_angle_data)
     elbow_angle_mean = np.mean(elbow_angle_data)
+    knee_angle_mean = np.mean(knee_angle_data)
+    hand_eye_mean = np.mean(hand_eye_data)
+    arm_angle_mean = np.mean(arm_angle_data)
+    hand_track_mean = np.mean(hand_track)
+    # 计算方差
     elbow_angle_var = np.var(elbow_angle_data)
-    lh_diff_std = np.sqrt(lh_diff_var)
-    lh_angle_std = np.sqrt(lh_angle_var)
-    hh_diff_std = np.sqrt(hh_diff_var)
-    hh_angle_std = np.sqrt(hh_angle_var)
-    arm_angle_std = np.sqrt(arm_angle_var)
+    knee_angle_var = np.var(knee_angle_data)
+    hand_eye_var = np.var(hand_eye_data)
+    arm_angle_var = np.var(arm_angle_data)
+    hand_track_var = np.var(hand_track)
     elbow_angle_std = np.sqrt(elbow_angle_var)
-    if lh_diff < lh_diff_mean - 3*lh_diff_std:
-        if lh_diff < 0:
-            result += "用户在拉臂时肘部抬的太低，击球点较低，请将手肘抬过肩膀，切勿抡大臂，谨防肩膀损伤。可以通过站立对墙扣球进行纠正，请及时反馈训练视频，不要养成错误习惯。"
-        else:
-            result += "用户在拉臂时肘部较低，击球点较低，可以将手肘拉起到接近耳朵位置，切勿抡大臂，谨防肩膀损伤。可以通过站立对墙扣球进行纠正，请及时反馈训练视频，不要养成错误习惯。"
-    if hh_diff < hh_diff_mean - 3*hh_diff_std:
-        if hh_diff < 0:
-            result += "同时，用户在转体挥臂时肘部抬的太低，请将手肘抬过肩膀，体会转体时将手肘藏到耳后再转肘的感觉。"
-        else:
-            result += "同时，用户在转体挥臂时肘部较低，可以将手肘拉起到接近耳朵位置，体会转体时将手肘藏到耳后再转肘的感觉。"
-    if hh_diff < lh_diff - lh_diff_std:
-        result += "用户在挥臂时掉肘，在扣球过程中，从拉臂到转体挥臂都需要始终保持肘部不往下掉，尽量提高击球点。"
-    if lh_angle > lh_angle_mean + 3*lh_angle_std or hh_angle > hh_angle_mean + 3*hh_angle_std:
-        result += "用户扣球时身体姿势过于倾斜，请注意找准球的位置，不要钻球。可以通过起跳抓球的方式训练找球能力，体会够着球去打的感觉。"
+    knee_angle_std = np.sqrt(knee_angle_var)
+    hand_eye_std = np.sqrt(hand_eye_var)
+    arm_angle_std = np.sqrt(arm_angle_var)
+    hand_track_std = np.sqrt(hand_track_var)
+
+    result = ""
+
+
+    if elbow_angle < elbow_angle_mean - 3*elbow_angle_std or elbow_angle > elbow_angle_mean + 3*elbow_angle_std:
+        if elbow_angle < 90:
+            result += "用户在卧推时，小臂与大臂呈锐角，可能导致肩关节的过度外旋，会增加肘关节的压力，且胸肌的激活会减少，三角肌和肩部的其他肌群可能会代偿发力。请尽量保持90度发力。"
+        if elbow_angle > 90:
+            result += "用户在卧推时，小臂与大臂呈钝角，肩关节可能会处于一个相对不稳定的状态，增加肩关节的压力，且胸肌的激活会减少，三角肌和肱三头肌可能会代偿发力。请尽量保持90度发力。"
+    if knee_angle < knee_angle_mean - 3*knee_angle_std:
+        result += "用户在卧推时，膝盖弯曲角度过小，可能会导致下半身稳定性不足，膝盖角度过小会使得下半身的肌肉群（如股四头肌、臀肌等）无法有效地参与支撑，整个身体的稳定性降低，可能导致上半身发力不均衡，从而增加腰部和肩部的负担，进而增加受伤风险。同时由于卧推时需要控制杠铃的重力，腰椎处于一个较为紧张的状态，若下肢没有有效支撑，可能导致腰椎过度弯曲或腰部疼痛。"
+    elif knee_angle > knee_angle_mean + 3*knee_angle_std:
+        result += "用户在卧推时，膝盖弯曲角度过大，臀部会被迫处于过度屈曲状态。这样会导致臀部肌肉参与过多的发力，从而可能导致臀部和下背部的过度紧张或疲劳,同时下肢的肌肉群（尤其是大腿和臀部）会过度用力，这可能会打乱下肢和上肢之间的协调性。在卧推时，正确的膝盖弯曲应当有助于传递力到上肢，而过度弯曲可能会干扰力量传递的流畅性，影响卧推的推力效率。"
+    if hand_eye < hand_eye_mean - 3*hand_eye_std or hand_eye > hand_eye_mean + 3*hand_eye_std:
+        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
     if arm_angle > arm_angle_mean + 3*arm_angle_std:
-        result += "身体朝向与扣球方向不一致，请注意，如果用户是面斜打斜，扣球时尽量保证身体朝向与扣球方向一致，确保能集中发力，请调整人球关系，在正前上方击球，"
-    if elbow_angle < elbow_angle_mean - 3*elbow_angle_std:
-        result += "挥臂时整个手臂不够伸直，过于弯曲，扣球动作无法做完整，发力不够且打点较低。请在站立扣球时进行针对练习，建议练习时完整做完整个扣球动作，"
+        result += "用户在卧推时，双臂夹角过大会导致肩膀的外展角度过大，增加肩部关节的负担，尤其是肩关节前部的旋转袖肌群。这种姿势可能会导致肩部过度拉伸或受压，长期这样做容易引起肩部疼痛、炎症，甚至是肩袖撕裂等严重问题。如果双臂夹角过大，手肘过低，胸大肌的激活程度可能会减弱，因为胸肌在过度外展的情况下无法有效发挥作用。反而，三角肌和肩部的其他肌肉群会承担更多的压力，可能导致训练效果不理想，甚至造成肌肉不平衡。"
+    if hand_track < hand_track_mean - 3*hand_track_std or hand_track > hand_track_mean + 3*hand_track_std:
+        result += "用户在卧推时，手臂应当保持一条弧线上下升，避免直上直下，当你在卧推时，手肘会略微向外扩展，形成一个自然的弧线，这有助于保持肩关节的安全和稳定。直上直下的动作会让肩关节过度承受压力，增加受伤风险。如果手臂直上直下，肩膀的内旋角度会过大，肩部的前侧肌肉（如肩袖）会过度受力。手臂弯曲并沿着弧线升降时，可以让肩部承受的压力更加均匀，从而避免因过度压迫造成肩关节的不适或损伤。手臂沿着弧线升降有助于更好地激活胸大肌。在直上直下的动作中，胸肌的参与度较低，更多的压力会被转移到肩膀和三头肌上。而弧线运动能够有效地让胸大肌承受更多的负荷，增强训练效果。"
+
     if result == "":
-        result += "用户扣球时挥臂动作标准，保持状态，继续训练，持续反馈！。"
+        result += "用户卧推时挥臂动作标准，保持状态，继续训练，持续反馈！。"
     return result
 
-def test_height_info(kpt):
-    # 输入kpt是一个二维数组，第一维为关节点，第二维为坐标 (x, y, z)
-    # 关节点索引定义如下：
-    # 0:臀部 7：脊椎 8：胸部  14：右肩 15：右肘 16：右手腕 13:左手腕
-    # 1：右髋 4：左髋
-    # 提取需要的关节点坐标
-    thorax = kpt[8]
-    right_shoulder = kpt[14]
-    right_elbow = kpt[15]
-    right_hip = kpt[1]
-    left_hip = kpt[4]
-    hip = kpt[0]
-    spine = kpt[7]
-    # 计算右肘、右肩高度
-    right_shoulder_height = right_shoulder[2]
-    right_elbow_height = right_elbow[2]
-    # 计算胸部到臀部的长度，推测身长
-    thorax_to_hip_length = np.linalg.norm(thorax - hip)
-    # 计算身体与竖直方向的夹角
-    body_vector = spine - (left_hip + right_hip) / 2
-    vertical_vector = np.array([0, -1, 0])  # y轴向上
-    body_angle = np.degrees(np.arccos(np.abs(
-        np.dot(body_vector, vertical_vector) / (np.linalg.norm(body_vector) * np.linalg.norm(vertical_vector)))))
+def calculate_angle(v1, v2):
+    # 计算两个向量的点积
+    dot_product = np.dot(v1, v2)
+    # 计算两个向量的模
+    norm_v1 = np.linalg.norm(v1)
+    norm_v2 = np.linalg.norm(v2)
+    
+    # 检查向量模是否为零
+    if norm_v1 == 0 or norm_v2 == 0:
+        raise ValueError("输入的向量不能为零向量")
+    
+    # 计算夹角的余弦值，并确保值在[-1, 1]范围内
+    cos_angle = np.clip(dot_product / (norm_v1 * norm_v2), -1.0, 1.0)
+    # 计算夹角（弧度）
+    angle = np.arccos(cos_angle)
+    # 将弧度转换为角度
+    angle_degrees = np.degrees(angle)
+    return angle_degrees
+  
 
-    # 臂展与身高成1：1，通过计算与身高的比例，消除身高产生的差异
-    shoulder_elbow_height = (right_shoulder_height - right_elbow_height) / thorax_to_hip_length
-    return shoulder_elbow_height, body_angle
+def test_arm_straight(kpt):
+    right_arm = kpt[14]
+    right_elbow = kpt[15]
+    right_wrist = kpt[16]
+    left_arm = kpt[11]
+    left_elbow = kpt[12]
+    left_wrist = kpt[13]
+    # 计算右肩肘与手肘的向量
+    right_upper_arm_vector = right_arm - right_elbow 
+    right_forearm_vector = right_wrist - right_elbow
+
+    # 计算左肩肘与手肘的向量
+    left_upper_arm_vector = left_arm - left_elbow 
+    left_forearm_vector = left_wrist - left_elbow 
+
+    # 计算右肩肘与手肘的夹角
+    right_elbow_angle = calculate_angle(right_upper_arm_vector, right_forearm_vector)
+
+    # 计算左肩肘与手肘的夹角
+    left_elbow_angle = calculate_angle(left_upper_arm_vector, left_forearm_vector)
+
+    print(f"Right elbow angle: {right_elbow_angle:.2f} degrees")
+    print(f"Left elbow angle: {left_elbow_angle:.2f} degrees")
+    return right_elbow_angle, left_elbow_angle
+
+def test_leg_pose(kpt):
+    right_knee = kpt[5]
+    left_knee = kpt[2]
+    hip = kpt[0]
+    #计算右膝与臀部的向量
+    right_leg_vector = right_knee - hip
+    #计算左膝与臀部的向量
+    left_leg_vector = left_knee - hip
+
+    #计算夹角
+    knee_angle = calculate_angle(right_leg_vector, left_leg_vector)
+
+    print(f"Knee angle: {knee_angle:.2f} degrees")
+    return knee_angle
 
 
 def test_arm_angle(kpt):
-    # 输入kpt是一个二维数组，第一维为关节点，第二维为坐标 (x, y, z)
-    # 关节点索引定义如下：
-    # 0: 臀部 7: 腹部 8: 颈部 10:头部 14: 右肩 15: 右肘 16: 右手腕
-    # 1: 右髋 4: 左髋
-    # 该函数目的为返回输入帧胳膊与身体朝向面的夹角，以及手腕到手肘、手肘到肩膀之间的夹角
-
-    right_shoulder = kpt[14]
     right_elbow = kpt[15]
-    right_wrist = kpt[16]
-    hip = kpt[0]
-    abdomen = kpt[7]
+    left_elbow = kpt[12]
     neck = kpt[8]
-    # 计算肩膀到手腕的向量
-    arm_vector = right_wrist - right_shoulder
+    # 计算右肘到颈部的向量
+    right_elbow_vector = right_elbow - neck
+    # 计算左肘到颈部的向量
+    left_elbow_vector = left_elbow - neck
 
-    # 计算身体朝向面的法向量
-    body_normal_vector = np.cross(abdomen - hip, neck - hip)
+    # 计算夹角
+    arm_angle = calculate_angle(right_elbow_vector, left_elbow_vector)
+
+    print(f"Right arm Left arm angle: {arm_angle:.2f} degrees")
+    return arm_angle
+
+def test_hand_eye(kpt):
+    right_hand = kpt[16]
+    left_hand = kpt[13]
+    forehead = kpt[10]
+    right_shoulder = kpt[14]
+    left_shoulder = kpt[11]
+    neck = kpt[8]
+
+    # 计算右肘到颈部的向量
+    right_shoulder_vector = right_shoulder - neck
+    # 计算左肘到颈部的向量
+    left_shoulder_vector = left_shoulder - neck
+
+    # 计算法向量
+    normal_vector = np.cross(right_shoulder_vector, left_shoulder_vector)
+
+    hand_middle = (right_hand + left_hand)/2
+
+    forehead_middle_vector = forehead - hand_middle
 
     # 计算向量的夹角
-    dot_product = np.dot(arm_vector, body_normal_vector)
-    magnitudes = np.linalg.norm(arm_vector) * np.linalg.norm(body_normal_vector)
-    arm_body_angle = np.degrees(np.arcsin(1) - np.arccos(np.abs(dot_product / magnitudes)))
+    angle = calculate_angle(normal_vector, forehead_middle_vector)
+    magnitude = np.linalg.norm(forehead_middle_vector)
+    distance = np.sin(angle) * magnitude
+    neck_forehead = forehead - neck
 
-    # 计算手腕到手肘、手肘到肩膀之间的夹角
-    wrist_to_elbow = right_wrist - right_elbow
-    elbow_to_shoulder = right_elbow - right_shoulder
+    return abs(distance)/abs(np.linalg.norm(neck_forehead))
 
-    dot_product_arm = np.abs(np.dot(wrist_to_elbow, elbow_to_shoulder))
-    magnitudes_arm = np.linalg.norm(wrist_to_elbow) * np.linalg.norm(elbow_to_shoulder)
-    elbow_angle = np.degrees(np.arccos(dot_product_arm / magnitudes_arm))
 
-    return arm_body_angle, elbow_angle
+def test_hand_track(highest_idx,finish_idx,keypoints_3d):
+    highesttime = keypoints_3d[highest_idx, :, :]
+    finishtime = keypoints_3d[finish_idx, :, :]
+    
+    highest_right_hand = highesttime[16]
+    highest_left_hand = highesttime[13]
+    finish_right_hand = finishtime[16]
+    finish_left_hand = finishtime[13]
+    highest_middle_hand = (highest_right_hand + highest_left_hand)/2
+    finish_middle_hand = (finish_right_hand + finish_left_hand)/2
+
+    finish_right_shoulder = finishtime[14]
+    finish_left_shoulder = finishtime[11]
+    finish_neck = finishtime[8]
+    finish_hip = finishtime[0]
+    right_shoulder_vector = finish_right_shoulder - finish_neck
+    left_shoulder_vector = finish_left_shoulder - finish_neck
+    body_length = np.linalg.norm(finish_neck - finish_hip)
+    normal_vector = np.cross(right_shoulder_vector, left_shoulder_vector)
+    angle = calculate_angle(normal_vector, finish_middle_hand - highest_middle_hand)
+    magnitude = np.linalg.norm(finish_middle_hand - highest_middle_hand)
+    distance = np.sin(angle) * magnitude
+    return abs(distance)/abs(body_length)
