@@ -1,6 +1,8 @@
 import numpy as np
 import os
-def test_spike_pose():
+from benchpress_data import save_data, load_data
+
+def test_spike_pose(train):
     result = ""
     output_dir = './demo/output/sample_video/'
     keypoints_2d = np.load(output_dir + 'input_2D/keypoints.npz', allow_pickle=True)['reconstruction']
@@ -53,16 +55,18 @@ def test_spike_pose():
     knee_angle = test_leg_pose(highesttime) #leftarm_highest_difference_height
     hand_eye = test_hand_eye(finishtime)
     arm_angle = test_arm_angle(finishtime)
-    #print("athlete5 standard pose info: \nlh_diff:", lh_diff, "\tlh_angle:", lh_angle)
-    #print("hh_diff:", hh_diff, "\thh_angle:", hh_angle)
     hand_track = test_hand_track(highest_idx,finish_idx,keypoints_3d)
-    
 
-    elbow_angle_data = np.array([90, 80, 95, 100, 105])
-    knee_angle_data = np.array([100,120,125,95,110,115,105])
-    hand_eye_data = np.array([0.25,0.3,0.2,0.15,0.4,0.15])
-    arm_angle_data = np.array([120,130,150,160,140,140,130])
-    hand_track = np.array([0.1,0.2,0.3,0.2,0.3,0.4,0,3,0.2,0.15])
+    elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track = load_data()
+    if(train == 1):
+        elbow_angle_data = np.append(elbow_angle_data, elbow_angle)
+        knee_angle_data = np.append(knee_angle_data, knee_angle)
+        hand_eye_data = np.append(hand_eye_data, hand_eye)
+        arm_angle_data = np.append(arm_angle_data, arm_angle)
+        hand_track = np.append(hand_track, hand_track)
+        save_data(elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track)
+        return "训练数据已保存"
+    
     # 计算均值
     elbow_angle_mean = np.mean(elbow_angle_data)
     knee_angle_mean = np.mean(knee_angle_data)
@@ -232,3 +236,5 @@ def test_hand_track(highest_idx,finish_idx,keypoints_3d):
     magnitude = np.linalg.norm(finish_middle_hand - highest_middle_hand)
     distance = np.sin(angle) * magnitude
     return abs(distance)/abs(body_length)
+
+
