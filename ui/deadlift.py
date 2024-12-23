@@ -123,40 +123,93 @@ def test_deadlift_pose(train=False):
         return "训练数据已保存"
 
     # 计算均值
-    elbow_angle_mean = np.mean(elbow_angle_data)
-    knee_angle_mean = np.mean(knee_angle_data)
-    hand_eye_mean = np.mean(hand_eye_data)
+    feet_factor_mean = np.mean(feet_factor_data)
+    start_leg_barbell_distance_mean = np.mean(start_leg_barbell_distance_data)
+    heighest_leg_barbell_distance_mean = np.mean(heighest_leg_barbell_distance_data)
+    finish_leg_barbell_distance_mean = np.mean(finish_leg_barbell_distance_data)
+    start_butt_navel_neck_dot_product_mean = np.mean(start_butt_navel_neck_dot_product_data)
+    heighest_butt_navel_neck_dot_product_mean = np.mean(heighest_butt_navel_neck_dot_product_data)
+    finish_butt_navel_neck_dot_product_mean = np.mean(finish_butt_navel_neck_dot_product_data)
+    start_head_neck_navel_dot_product_mean = np.mean(start_head_neck_navel_dot_product_data)
+    heighest_head_neck_navel_dot_product_mean = np.mean(heighest_head_neck_navel_dot_product_data)
+    finish_head_neck_navel_dot_product_mean = np.mean(finish_head_neck_navel_dot_product_data)
     arm_angle_mean = np.mean(arm_angle_data)
-    hand_track_mean = np.mean(hand_track)
-    # 计算方差
-    elbow_angle_var = np.var(elbow_angle_data)
-    knee_angle_var = np.var(knee_angle_data)
-    hand_eye_var = np.var(hand_eye_data)
-    arm_angle_var = np.var(arm_angle_data)
-    hand_track_var = np.var(hand_track)
-    elbow_angle_std = np.sqrt(elbow_angle_var)
-    knee_angle_std = np.sqrt(knee_angle_var)
-    hand_eye_std = np.sqrt(hand_eye_var)
-    arm_angle_std = np.sqrt(arm_angle_var)
-    hand_track_std = np.sqrt(hand_track_var)
+    # 计算标准差
+    feet_factor_std = np.std(feet_factor_data)
+    start_leg_barbell_distance_std = np.std(start_leg_barbell_distance_data)
+    heighest_leg_barbell_distance_std = np.std(heighest_leg_barbell_distance_data)
+    finish_leg_barbell_distance_std = np.std(finish_leg_barbell_distance_data)
+    start_butt_navel_neck_dot_product_std = np.std(start_butt_navel_neck_dot_product_data)
+    heighest_butt_navel_neck_dot_product_std = np.std(heighest_butt_navel_neck_dot_product_data)
+    finish_butt_navel_neck_dot_product_std = np.std(finish_butt_navel_neck_dot_product_data)
+    start_head_neck_navel_dot_product_std = np.std(start_head_neck_navel_dot_product_data)
+    heighest_head_neck_navel_dot_product_std = np.std(heighest_head_neck_navel_dot_product_data)
+    finish_head_neck_navel_dot_product_std = np.std(finish_head_neck_navel_dot_product_data)
+    arm_angle_std = np.std(arm_angle_data)
+
+    # 两脚介于与肩同宽和与髋同宽之间 肩宽/髋宽/脚宽
+    # 在不移动杠铃杆的前提下，弯曲膝盖，使小腿贴住杠铃杆。 小腿和杠铃距离
+    # 在不移动杠铃杆的前提下，挺胸，腰椎维持正常曲度，进入硬拉起始姿势。此外，还需保持头部中立位（既不抬头，也不低头），这样我们能更容易保持挺胸直背的姿势。 屁股肚脐脖子角度 额头脖子肚脐角度
+    # 肩胛骨、杠铃杆以及脚中心点在同一竖直平面内对齐，保持挺胸，腰椎维持正常曲度，肘关节伸直，双脚全脚掌着地 ？？
+    # 错误的硬拉起始姿势：a.杠铃杆位于脚中心点前方的位置：b.肩胛骨位于杠铃杆后方的位置：
+    # 第1个错误：驼背弯腰   第2个错误：手臂弯曲   第3个错误：杠铃脱离腿部   硬拉锁定姿势时腰椎过伸：
 
     result = ""
 
-    if elbow_angle < elbow_angle_mean - 3 * elbow_angle_std or elbow_angle > elbow_angle_mean + 3 * elbow_angle_std:
-        if elbow_angle < 90:
-            result += "用户在卧推时，小臂与大臂呈锐角，可能导致肩关节的过度外旋，会增加肘关节的压力，且胸肌的激活会减少，三角肌和肩部的其他肌群可能会代偿发力。请尽量保持90度发力。"
-        if elbow_angle > 90:
-            result += "用户在卧推时，小臂与大臂呈钝角，肩关节可能会处于一个相对不稳定的状态，增加肩关节的压力，且胸肌的激活会减少，三角肌和肱三头肌可能会代偿发力。请尽量保持90度发力。"
-    if knee_angle < knee_angle_mean - 3 * knee_angle_std:
-        result += "用户在卧推时，膝盖弯曲角度过小，可能会导致下半身稳定性不足，膝盖角度过小会使得下半身的肌肉群（如股四头肌、臀肌等）无法有效地参与支撑，整个身体的稳定性降低，可能导致上半身发力不均衡，从而增加腰部和肩部的负担，进而增加受伤风险。同时由于卧推时需要控制杠铃的重力，腰椎处于一个较为紧张的状态，若下肢没有有效支撑，可能导致腰椎过度弯曲或腰部疼痛。"
-    elif knee_angle > knee_angle_mean + 3 * knee_angle_std:
-        result += "用户在卧推时，膝盖弯曲角度过大，臀部会被迫处于过度屈曲状态。这样会导致臀部肌肉参与过多的发力，从而可能导致臀部和下背部的过度紧张或疲劳,同时下肢的肌肉群（尤其是大腿和臀部）会过度用力，这可能会打乱下肢和上肢之间的协调性。在卧推时，正确的膝盖弯曲应当有助于传递力到上肢，而过度弯曲可能会干扰力量传递的流畅性，影响卧推的推力效率。"
-    if hand_eye < hand_eye_mean - 3 * hand_eye_std or hand_eye > hand_eye_mean + 3 * hand_eye_std:
+    if feet_factor < feet_factor_mean - 3 * feet_factor_std:
+        result += "用户在硬拉时，两脚间距过小，可能导致上半身稳定性不足，使得上半身的肌肉群（如肩部、背部、核心肌群等）无法有效地参与支撑，整个身体的稳定性降低，进而增加受伤风险。建议两脚介于与肩同宽和与髋同宽之间。\n"
+    elif feet_factor > feet_factor_mean + 3 * feet_factor_std:
+        result += "用户在硬拉时，两脚间距过大，会增加膝关节和髋关节的负担，提升受伤风险。并且加大下背部的压力，容易导致腰部受伤。两脚介于与肩同宽和与髋同宽之间。\n"
+    if (
+        start_leg_barbell_distance > start_leg_barbell_distance_mean + 3 * start_leg_barbell_distance_std
+        or heighest_leg_barbell_distance > heighest_leg_barbell_distance_mean + 3 * heighest_leg_barbell_distance_std
+        or finish_leg_barbell_distance > finish_leg_barbell_distance_mean + 3 * finish_leg_barbell_distance_std
+    ):
+        result += "用户在硬拉起始姿势时，小腿和杠铃的距离过大，可能导致腰部过度前倾，增加腰部的压力，容易导致腰部受伤。同时，在后续髋部抬高的过程中，杠铃杆不再紧贴胫骨，处于失衡状态，增大对腰部稳定性的要求，从而增加腰部受伤风险。建议硬拉全程，杠铃杆始终贴着腿部上下移动。\n"
+    if (
+        start_butt_navel_neck_dot_product
+        > start_butt_navel_neck_dot_product_mean + 3 * start_butt_navel_neck_dot_product_std
+        or start_butt_navel_neck_dot_product
+        < start_butt_navel_neck_dot_product_mean - 3 * start_butt_navel_neck_dot_product_std
+    ):
+        result += "用户在硬拉起始动作时，上半身并未保持挺胸收腹，而是弯腰驼背，这会使得腰部承受更大的压力，增加受伤风险。建议在硬拉起始动作时，上半身保持挺胸收腹，腰部保持正常曲度。\n"
+    if (
+        heighest_butt_navel_neck_dot_product
+        < heighest_butt_navel_neck_dot_product_mean - 3 * heighest_butt_navel_neck_dot_product_std
+        or heighest_butt_navel_neck_dot_product
+        > heighest_butt_navel_neck_dot_product_mean + 3 * heighest_butt_navel_neck_dot_product_std
+    ):
+        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
+    if (
+        finish_butt_navel_neck_dot_product
+        < finish_butt_navel_neck_dot_product_mean - 3 * finish_butt_navel_neck_dot_product_std
+        or finish_butt_navel_neck_dot_product
+        > finish_butt_navel_neck_dot_product_mean + 3 * finish_butt_navel_neck_dot_product_std
+    ):
         result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
     if arm_angle > arm_angle_mean + 3 * arm_angle_std:
         result += "用户在卧推时，双臂夹角过大会导致肩膀的外展角度过大，增加肩部关节的负担，尤其是肩关节前部的旋转袖肌群。这种姿势可能会导致肩部过度拉伸或受压，长期这样做容易引起肩部疼痛、炎症，甚至是肩袖撕裂等严重问题。如果双臂夹角过大，手肘过低，胸大肌的激活程度可能会减弱，因为胸肌在过度外展的情况下无法有效发挥作用。反而，三角肌和肩部的其他肌肉群会承担更多的压力，可能导致训练效果不理想，甚至造成肌肉不平衡。"
-    if hand_track < hand_track_mean - 3 * hand_track_std or hand_track > hand_track_mean + 3 * hand_track_std:
-        result += "用户在卧推时，手臂应当保持一条弧线上下升，避免直上直下，当你在卧推时，手肘会略微向外扩展，形成一个自然的弧线，这有助于保持肩关节的安全和稳定。直上直下的动作会让肩关节过度承受压力，增加受伤风险。如果手臂直上直下，肩膀的内旋角度会过大，肩部的前侧肌肉（如肩袖）会过度受力。手臂弯曲并沿着弧线升降时，可以让肩部承受的压力更加均匀，从而避免因过度压迫造成肩关节的不适或损伤。手臂沿着弧线升降有助于更好地激活胸大肌。在直上直下的动作中，胸肌的参与度较低，更多的压力会被转移到肩膀和三头肌上。而弧线运动能够有效地让胸大肌承受更多的负荷，增强训练效果。"
+    if (
+        start_head_neck_navel_dot_product
+        < start_head_neck_navel_dot_product_mean - 3 * start_head_neck_navel_dot_product_std
+        or start_head_neck_navel_dot_product
+        > start_head_neck_navel_dot_product_mean + 3 * start_head_neck_navel_dot_product_std
+    ):
+        result += "用户在卧推时，手臂应当保持一条弧线上下升"
+    if (
+        heighest_head_neck_navel_dot_product
+        < heighest_head_neck_navel_dot_product_mean - 3 * heighest_head_neck_navel_dot_product_std
+        or heighest_head_neck_navel_dot_product
+        > heighest_head_neck_navel_dot_product_mean + 3 * heighest_head_neck_navel_dot_product_std
+    ):
+        result += "用户在卧推时，手臂应当保持一条弧线上下升"
+    if (
+        finish_head_neck_navel_dot_product
+        < finish_head_neck_navel_dot_product_mean - 3 * finish_head_neck_navel_dot_product_std
+        or finish_head_neck_navel_dot_product
+        > finish_head_neck_navel_dot_product_mean + 3 * finish_head_neck_navel_dot_product_std
+    ):
+        result += "用户在卧推时，手臂应当保持一条弧线上下升"
 
     if result == "":
         result += "用户卧推时挥臂动作标准，保持状态，继续训练，持续反馈！。"
@@ -255,7 +308,7 @@ def test_butt_navel_neck_dot_product(kpt):
     neck_navel_vector = neck_navel_vector / np.linalg.norm(neck_navel_vector)
     return np.dot(butt_navel_vector, neck_navel_vector)
 
-‘
+
 def test_head_neck_navel_dot_product(kpt):
     head = kpt[10]
     neck = kpt[8]
