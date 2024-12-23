@@ -9,6 +9,6 @@ filterpy
 scikit-image
 opencv-python
 ipython
-
+openai
 
 

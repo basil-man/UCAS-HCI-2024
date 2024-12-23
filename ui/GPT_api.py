@@ -31,7 +31,7 @@ def generate_prompt(action, oral_advice, max_retries=3):
                 messages=[
                     {
                         "role": "system",
-                        "content": "Only return content directly as requested.",
+                        "content": "Only return content directly as requested. 所有的回复全都用中文",
                     },
                     {"role": "user", "content": prompt_description},
                 ],
@@ -48,5 +48,5 @@ def generate_prompt(action, oral_advice, max_retries=3):
             retry_count += 1
             print(f"Retrying... ({retry_count}/{max_retries})")
 
-    print(f"Failed to generate advice for {action} after {max_retries} retries.")
+    print(f"GPTapi: Failed to generate advice for {action} after {max_retries} retries.")
     return None

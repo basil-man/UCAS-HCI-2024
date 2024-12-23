@@ -10,7 +10,7 @@ sys.path.append(demo_dir)
 
 from demo.vis import generate
 from deadlift import test_deadlift_pose as deadlift_pose
-from benchpress import test_spike_pose as benchpress_pose
+from benchpress import test_benchpress_pose as benchpress_pose
 from deepsquat import test_squat_pose as deepsquat_pose
 from GPT_api import generate_prompt as gpt_prompt
 
