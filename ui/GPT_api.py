@@ -15,23 +15,11 @@ client = OpenAI(
 )
 
 
-def load_progress(progress_file):
-    if os.path.exists(progress_file):
-        with open(progress_file, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return {}
-
-
-def save_progress(progress_file, progress_data):
-    with open(progress_file, "w") as f:
-        json.dump(progress_data, f)
-
-
-def generate_prompt(domain, class_name, max_retries=3):
+def generate_prompt(action, oral_advice, max_retries=3):
     """
     使用 GPT API 根据 domain 和 class 生成相关图片的提示词，最多尝试 max_retries 次。
     """
-    prompt_description = f"‘[class_name] = {class_name}; [domain style] = {domain}’. I want to generate a sentence/description which contains the classname and one of domain style above. Please make sure the description has a certain degree of variation and with about 40 words."
+    prompt_description = f"下面是我对于{action}的建议：{oral_advice}，我觉得这个建议还不够完善，你可以再补充一下吗？"
 
     retry_count = 0
 
@@ -43,7 +31,7 @@ def generate_prompt(domain, class_name, max_retries=3):
                 messages=[
                     {
                         "role": "system",
-                        "content": "Only return the prompt or content directly as requested.",
+                        "content": "Only return content directly as requested.",
                     },
                     {"role": "user", "content": prompt_description},
                 ],
@@ -56,9 +44,9 @@ def generate_prompt(domain, class_name, max_retries=3):
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            print(f"Error generating prompt for {class_name} in {domain}: {e}")
+            print(f"Error generating advice for {action}: {e}")
             retry_count += 1
             print(f"Retrying... ({retry_count}/{max_retries})")
 
-    print(f"Failed to generate prompt for {class_name} in {domain} after {max_retries} retries.")
+    print(f"Failed to generate advice for {action} after {max_retries} retries.")
     return None
