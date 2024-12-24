@@ -6,7 +6,7 @@ from benchpress_data import save_data, load_data
 # 两脚介于与肩同宽和与髋同宽之间 肩宽/髋宽/脚宽
 # 在不移动杠铃杆的前提下，弯曲膝盖，使小腿贴住杠铃杆。 小腿和杠铃距离
 # 在不移动杠铃杆的前提下，挺胸，腰椎维持正常曲度，进入硬拉起始姿势。此外，还需保持头部中立位（既不抬头，也不低头），这样我们能更容易保持挺胸直背的姿势。 屁股肚脐脖子角度 额头脖子肚脐角度
-# 肩胛骨、杠铃杆以及脚中心点在同一竖直平面内对齐，保持挺胸，腰椎维持正常曲度，肘关节伸直，双脚全脚掌着地 ？？
+# 肩胛骨、杠铃杆以及脚中心点在同一竖直平面内对齐，保持挺胸，腰椎维持正常曲度，肘关节伸直，双脚全脚掌着地
 # 错误的硬拉起始姿势：a.杠铃杆位于脚中心点前方的位置：b.肩胛骨位于杠铃杆后方的位置：
 # 第1个错误：驼背弯腰   第2个错误：手臂弯曲   第3个错误：杠铃脱离腿部   硬拉锁定姿势时腰椎过伸：
 
@@ -15,21 +15,6 @@ from benchpress_data import save_data, load_data
 # 屁股肚脐脖子标准向量点积  （开始/高点/结束时记录）butt_navel_neck_dot_product
 # 额头脖子肚脐标准向量点积  （开始/高点/结束时记录）head_neck_navel_dot_product
 # 手肘肩标准向量点积  （开始时记录） hand_elbow_shoulder_dot_product
-
-# 选取关键点编号
-HIP = 0  # 臀部
-LEFT_HIP = 1
-LEFT_KNEE = 2
-LEFT_FOOT = 3
-RIGHT_HIP = 4
-RIGHT_KNEE = 5
-RIGHT_FOOT = 6
-NAVEL = 7  # 肚脐
-NECK = 8  # 脖子
-HEAD = 10  # 额头
-LEFT_HAND = 13  # 左手腕
-LEFT_SHOULDER = 14  # 左肩
-LEFT_ELBOW = 15  # 左肘
 
 
 def test_deadlift_pose(train=False):
@@ -172,47 +157,40 @@ def test_deadlift_pose(train=False):
         or start_butt_navel_neck_dot_product
         < start_butt_navel_neck_dot_product_mean - 3 * start_butt_navel_neck_dot_product_std
     ):
-        result += "用户在硬拉起始动作时，上半身并未保持挺胸收腹，而是弯腰驼背，这会使得腰部承受更大的压力，增加受伤风险。建议在硬拉起始动作时，上半身保持挺胸收腹，腰部保持正常曲度。\n"
+        result += "用户在硬拉起始动作时，上半身并未保持挺胸收腹，而是弯腰驼背，这会使得腰部承受更大的压力，增加腰关节受伤风险。建议在硬拉起始动作时，上半身保持挺胸收腹，腰部保持正常曲度。\n"
     if (
         heighest_butt_navel_neck_dot_product
         < heighest_butt_navel_neck_dot_product_mean - 3 * heighest_butt_navel_neck_dot_product_std
         or heighest_butt_navel_neck_dot_product
         > heighest_butt_navel_neck_dot_product_mean + 3 * heighest_butt_navel_neck_dot_product_std
     ):
-        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
+        result += "用户在硬拉高点时，上半身并未保持挺胸收腹，而是弯腰驼背，这会给肩部关节和软组织带来更大的压力，增加受伤风险。建议在硬拉高点时，上半身保持挺胸收腹，腰部保持正常曲度。\n"
     if (
         finish_butt_navel_neck_dot_product
         < finish_butt_navel_neck_dot_product_mean - 3 * finish_butt_navel_neck_dot_product_std
         or finish_butt_navel_neck_dot_product
         > finish_butt_navel_neck_dot_product_mean + 3 * finish_butt_navel_neck_dot_product_std
     ):
-        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
-    if arm_angle > arm_angle_mean + 3 * arm_angle_std:
-        result += "用户在卧推时，双臂夹角过大会导致肩膀的外展角度过大，增加肩部关节的负担，尤其是肩关节前部的旋转袖肌群。这种姿势可能会导致肩部过度拉伸或受压，长期这样做容易引起肩部疼痛、炎症，甚至是肩袖撕裂等严重问题。如果双臂夹角过大，手肘过低，胸大肌的激活程度可能会减弱，因为胸肌在过度外展的情况下无法有效发挥作用。反而，三角肌和肩部的其他肌肉群会承担更多的压力，可能导致训练效果不理想，甚至造成肌肉不平衡。"
+        result += "用户在硬拉完成动作时，上半身并未保持挺胸收腹，而是弯腰驼背，这表明杠铃下放过程中，可能存在弯腰的情况，对腰关节造成更大的压力，存在受伤风险\n"
+    if arm_angle > arm_angle_mean + 3 * arm_angle_std or arm_angle < arm_angle_mean - 3 * arm_angle_std:
+        result += "用户在硬拉时，手臂未保持伸直，而是弯曲，这会增加肩部和肘部的压力，增加受伤风险。建议在硬拉时，手臂保持伸直，不要弯曲。\n"
     if (
         start_head_neck_navel_dot_product
         < start_head_neck_navel_dot_product_mean - 3 * start_head_neck_navel_dot_product_std
         or start_head_neck_navel_dot_product
         > start_head_neck_navel_dot_product_mean + 3 * start_head_neck_navel_dot_product_std
-    ):
-        result += "用户在卧推时，手臂应当保持一条弧线上下升"
-    if (
-        heighest_head_neck_navel_dot_product
+        or heighest_head_neck_navel_dot_product
         < heighest_head_neck_navel_dot_product_mean - 3 * heighest_head_neck_navel_dot_product_std
         or heighest_head_neck_navel_dot_product
         > heighest_head_neck_navel_dot_product_mean + 3 * heighest_head_neck_navel_dot_product_std
-    ):
-        result += "用户在卧推时，手臂应当保持一条弧线上下升"
-    if (
-        finish_head_neck_navel_dot_product
+        or finish_head_neck_navel_dot_product
         < finish_head_neck_navel_dot_product_mean - 3 * finish_head_neck_navel_dot_product_std
         or finish_head_neck_navel_dot_product
         > finish_head_neck_navel_dot_product_mean + 3 * finish_head_neck_navel_dot_product_std
     ):
-        result += "用户在卧推时，手臂应当保持一条弧线上下升"
-
+        result += "用户在硬拉时，应保持抬头，不要低头，这样可以更好地保持挺胸直背的姿势，减少腰部受力，降低受伤风险。\n"
     if result == "":
-        result += "用户卧推时挥臂动作标准，保持状态，继续训练，持续反馈！。"
+        result += "用户硬拉时动作标准，保持状态，继续训练，持续反馈！。"
     return result
 
 
