@@ -9,7 +9,6 @@ filterpy
 scikit-image
 opencv-python
 ipython
-gradio
-argparse
+
 
 
