@@ -3,39 +3,31 @@ import os
 from benchpress_data import save_data, load_data
 
 
-def test_benchpress_pose(train):
+def test_benchpress_pose(train,video_path):
     result = ""
-    output_dir = "./demo/output/sample_video/"
-    keypoints_2d = np.load(output_dir + "input_2D/keypoints.npz", allow_pickle=True)["reconstruction"]
-    keypoints_3d = np.load(output_dir + "output_3D/output_keypoints_3d.npz", allow_pickle=True)["reconstruction"]
+    output_dir = video_path
+    keypoints_2d = np.load(output_dir + "/input_2D/keypoints.npz", allow_pickle=True)["reconstruction"]
+    keypoints_3d = np.load(output_dir + "/output_3D/output_keypoints_3d.npz", allow_pickle=True)["reconstruction"]
 
     start_idx = -1
     highest_idx = -1
     finish_idx = -1
-    right_elbow_angle_m = 180
-    left_elbow_angle_m = 180
+    right_elbow_angle_min = 180
+    left_elbow_angle_min = 180
+    right_elbow_angle_max = 0
+    left_elbow_angle_max = 0
     for i in range(keypoints_3d.shape[0]):
-        if i > start_idx and highest_idx == -1:
-            kpt = keypoints_3d[i, :, :]
-            right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
-            if right_elbow_angle < 175 or left_elbow_angle < 175:
-                continue
-            else:
-                highest_idx = i
-        if i > highest_idx and highest_idx > 0:
-            kpt = keypoints_3d[i, :, :]
-            right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
-            if (
-                right_elbow_angle < 150
-                and left_elbow_angle < 150
-                and right_elbow_angle < right_elbow_angle_m
-                and left_elbow_angle < left_elbow_angle_m
-            ):
-                right_elbow_angle_m = right_elbow_angle
-                left_elbow_angle_m = left_elbow_angle
-                finish_idx = i
-            elif right_elbow_angle > right_elbow_angle_m + 10 or left_elbow_angle > left_elbow_angle_m + 10:
-                break
+        kpt = keypoints_3d[i, :, :]
+        right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
+        if(right_elbow_angle + left_elbow_angle > right_elbow_angle_max + left_elbow_angle_max):
+            highest_idx = i
+            right_elbow_angle_max = right_elbow_angle
+            left_elbow_angle_max = left_elbow_angle
+        if(right_elbow_angle + left_elbow_angle < right_elbow_angle_min + left_elbow_angle_min):
+            finish_idx = i
+            right_elbow_angle_min = right_elbow_angle
+            left_elbow_angle_min = left_elbow_angle
+
 
     # print("highest_idx is ",highest_idx,"horizon_idx is ",horizon_idx)
     if highest_idx == -1 or finish_idx == -1:
@@ -43,13 +35,7 @@ def test_benchpress_pose(train):
 
     highesttime = keypoints_3d[highest_idx, :, :]
     finishtime = keypoints_3d[finish_idx, :, :]
-
-    uptime = highest_idx
-    downtime = finish_idx
-    if uptime > 3 * downtime:
-        return "卧推下降速度过快，可能会导致肩膀受伤，请注意控制下降速度，保持动作标准。"
-    if downtime > 3 * uptime:
-        return "卧推上升速度过快，可能会导致肩膀受伤，请注意控制上升速度，保持动作标准。"
+    
     # 输入hkpt和lkpt是二维数组，第一维为时间帧，第二维为坐标 (x, y, z)
     # x表示横向，右手为负，y表示纵向高度，越高值越小，z表示前后，越靠前值越小
     # print(hkpt)
@@ -62,33 +48,35 @@ def test_benchpress_pose(train):
     arm_angle = test_arm_angle(finishtime)
     hand_track = test_hand_track(highest_idx, finish_idx, keypoints_3d)
 
-    elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track = load_data()
+    elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track_data = load_data()
+
     if train == 1:
         elbow_angle_data = np.append(elbow_angle_data, elbow_angle)
         knee_angle_data = np.append(knee_angle_data, knee_angle)
         hand_eye_data = np.append(hand_eye_data, hand_eye)
         arm_angle_data = np.append(arm_angle_data, arm_angle)
-        hand_track = np.append(hand_track, hand_track)
+        hand_track_data = np.append(hand_track_data, hand_track)
         save_data(elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track)
         return "训练数据已保存"
-
+    
     # 计算均值
     elbow_angle_mean = np.mean(elbow_angle_data)
     knee_angle_mean = np.mean(knee_angle_data)
     hand_eye_mean = np.mean(hand_eye_data)
     arm_angle_mean = np.mean(arm_angle_data)
-    hand_track_mean = np.mean(hand_track)
+    hand_track_mean = np.mean(hand_track_data)
     # 计算方差
     elbow_angle_var = np.var(elbow_angle_data)
     knee_angle_var = np.var(knee_angle_data)
     hand_eye_var = np.var(hand_eye_data)
     arm_angle_var = np.var(arm_angle_data)
-    hand_track_var = np.var(hand_track)
+    hand_track_var = np.var(hand_track_data)
     elbow_angle_std = np.sqrt(elbow_angle_var)
     knee_angle_std = np.sqrt(knee_angle_var)
     hand_eye_std = np.sqrt(hand_eye_var)
     arm_angle_std = np.sqrt(arm_angle_var)
     hand_track_std = np.sqrt(hand_track_var)
+
 
     result = ""
 
@@ -243,3 +231,4 @@ def test_hand_track(highest_idx, finish_idx, keypoints_3d):
     magnitude = np.linalg.norm(finish_middle_hand - highest_middle_hand)
     distance = np.sin(angle) * magnitude
     return abs(distance) / abs(body_length)
+
