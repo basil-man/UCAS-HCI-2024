@@ -11,6 +11,7 @@ analyzer = Analysis()
 # 文件保存路径
 UPLOAD_DIR = "./demo/video/"
 OUTPUT_VIDEO_PATH = "./ui/cache/square_vedio.mp4"
+OUTPUT_DIR = "./demo/output/sample_video/"
 
 
 # 处理上传视频
@@ -30,7 +31,16 @@ def estimate(video_path):
     output_path = estimator(OUTPUT_VIDEO_PATH)
     if not os.path.exists(output_path):
         return "Error: 姿态估计失败，未生成视频。"
-    return output_path  # 返回处理后的视频路径
+
+    # 读取结果文件
+    result_file_path = os.path.join(OUTPUT_DIR, "result.txt")
+    if not os.path.exists(result_file_path):
+        return "Error: 结果文件未找到。"
+
+    with open(result_file_path, "r") as f:
+        result = f.read()
+
+    return output_path, result  # 返回处理后的视频路径和结果
 
 
 # 调用动作分析逻辑
@@ -59,7 +69,7 @@ with gr.Blocks() as demo:
     with gr.Row(equal_height=True):
         with gr.Column():
             input_video = gr.Video(format="mp4", label="上传视频")
-            mode = gr.Dropdown(label="动作模式", choices=["扣球🏐", "拦网🙌🏻"], value="扣球🏐")
+            mode = gr.Dropdown(label="动作模式", choices=["深蹲", "卧推", "硬拉"], value="深蹲")
             with gr.Row():
                 submit1 = gr.Button("姿态估计")
                 submit2 = gr.Button("动作分析")
@@ -69,9 +79,9 @@ with gr.Blocks() as demo:
             analysis = gr.Textbox(label="分析结果")
 
     # 按钮点击逻辑
-    submit1.click(fn=estimate, inputs=input_video, outputs=estimation)
+    submit1.click(fn=lambda video_path: estimate(video_path)[0], inputs=input_video, outputs=estimation)
     submit2.click(
-        fn=lambda video_path, mode: [estimate(video_path), analyze(video_path, mode)],
+        fn=lambda video_path, mode: [estimate(video_path)[0], analyze(video_path, mode)],
         inputs=[input_video, mode],
         outputs=[estimation, analysis],
     )
