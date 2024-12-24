@@ -10,6 +10,7 @@ analyzer = Analysis()
 # 文件保存路径
 UPLOAD_DIR = "./demo/video/"
 OUTPUT_VIDEO_PATH = "./demo/output/sample_video/output_video.mp4"
+OUTPUT_DIR = "./demo/output/sample_video/"
 
 # 处理上传视频
 def read_video(video_path):
@@ -24,7 +25,16 @@ def estimate(video_path):
     output_path = estimator(video_path)
     if not os.path.exists(output_path):
         return "Error: 姿态估计失败，未生成视频。"
-    return output_path  # 返回处理后的视频路径
+    
+    # 读取结果文件
+    result_file_path = os.path.join(OUTPUT_DIR, "result.txt")
+    if not os.path.exists(result_file_path):
+        return "Error: 结果文件未找到。"
+    
+    with open(result_file_path, "r") as f:
+        result = f.read()
+    
+    return output_path, result  # 返回处理后的视频路径和结果
 
 # 调用动作分析逻辑
 def analyze(video_path, mode):
@@ -64,12 +74,12 @@ with gr.Blocks() as demo:
 
     # 按钮点击逻辑
     submit1.click(
-        fn=estimate,
+        fn=lambda video_path: estimate(video_path)[0],
         inputs=input_video,
         outputs=estimation
     )
     submit2.click(
-        fn=lambda video_path, mode: [estimate(video_path), analyze(video_path, mode)],
+        fn=lambda video_path, mode: [estimate(video_path)[0], analyze(video_path, mode)],
         inputs=[input_video, mode],
         outputs=[estimation, analysis]
     )
