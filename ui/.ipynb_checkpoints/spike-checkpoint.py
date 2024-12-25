@@ -150,3 +150,6 @@ def test_arm_angle(kpt):
     elbow_angle = np.degrees(np.arccos(dot_product_arm / magnitudes_arm))
 
     return arm_body_angle, elbow_angle
+
+def test_block_pose():
+    return "1"

@@ -51,8 +51,7 @@ with gr.Blocks() as demo:
             input_video = gr.Video(format="mp4", label="上传视频")
             mode = gr.Dropdown(
                 label="动作模式", 
-                choices=["扣球🏐", "拦网🙌🏻"], 
-                value="扣球🏐"
+                choices=["卧推", "硬拉","深蹲"]
             )
             with gr.Row():
                 submit1 = gr.Button("姿态估计")

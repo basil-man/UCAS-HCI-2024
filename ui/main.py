@@ -33,13 +33,13 @@ class PoseEstimation:
 class Analysis:
     """Performs analysis based on mode."""
 
-    def __call__(self, mode):
+    def __call__(self, mode,video_path):
         if mode == "硬拉":
             return deadlift_pose()
         elif mode == "deep_squat":
             return deepsquat_pose()
         elif mode == "卧推":
-            return benchpress_pose(0)
+            return benchpress_pose(0,video_path)
         else:
             return test_block_pose()
 
@@ -47,10 +47,10 @@ class Analysis:
 def analyze_video(video_path, mode):
     """Runs pose estimation and analysis."""
     pose_estimation = PoseEstimation()
-    pose_estimation(video_path)
-
+    output_path = pose_estimation(video_path)
+    directory = os.path.dirname(output_path)
     analysis = Analysis()
-    return analysis(mode)
+    return analysis(mode,directory)
 
 
 # Main script execution
@@ -60,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument("mode", type=str, help="The mode of analysis (e.g., 硬拉, deep_squat, 卧推)")
     parser.add_argument("--video", type=str, default="./demo/video/sample_video.mp4", help="Path to the input video")
     args = parser.parse_args()
+
 
     # Start processing
     print("Starting pose estimation and analysis...")
