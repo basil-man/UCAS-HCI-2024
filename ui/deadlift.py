@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from benchpress_data import save_data, load_data
+from deadlift_data import save_data, load_data
 
 
 # 两脚介于与肩同宽和与髋同宽之间 肩宽/髋宽/脚宽

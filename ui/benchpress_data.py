@@ -25,5 +25,5 @@ def load_data():
     print("Data loaded from data.npz")
     return elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track_data
 
-if __name__ == "__self__":
+if __name__ == "__main__":
     save_data(elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track_data)
