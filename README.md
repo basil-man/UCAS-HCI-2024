@@ -2,8 +2,6 @@
 
 ![zhu](figure/zhu.gif)
 
-## News
-- Our method has been improved the efficiency without sacrificing performance in [🔥HoT🔥](https://github.com/NationalGAILab/HoT), CVPR 2024!
 
 ## Installation
 
@@ -107,3 +105,20 @@ Our code is extended from the following repositories. We thank the authors for r
 ## Licence
 
 This project is licensed under the terms of the MIT license.
+
+## 姿态识别
+
+### ui界面
+
+运行下列代码
+
+```
+python ui/gradio_estimate.py
+```
+
+### 模型训练
+
+打开ui/train.py，修改第54行，将需训练的姿态动作视频放入一个文件夹当中，并修改训练路径，同时修改mode，接下来会自动训练该文件夹下的所有视频。
+
+注意训练前请先运行一下相关动作的_data文件，但切记，开始训练后不要再运行该文件，该文件会刷新训练后的npz文件，同样对于新的训练集，直接替换掉原来的训练集，开始训练即可。
+

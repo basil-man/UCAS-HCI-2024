@@ -16,11 +16,25 @@ from deadlift_data import save_data, load_data
 # 额头脖子肚脐标准向量点积  （开始/高点/结束时记录）head_neck_navel_dot_product
 # 手肘肩标准向量点积  （开始时记录） hand_elbow_shoulder_dot_product
 
+HIP = 0  # 臀部
+LEFT_HIP = 1
+LEFT_KNEE = 2
+LEFT_FOOT = 3
+RIGHT_HIP = 4
+RIGHT_KNEE = 5
+RIGHT_FOOT = 6
+NAVEL = 7  # 肚脐
+NECK = 8  # 脖子
+HEAD = 10  # 额头
+LEFT_HAND = 13  # 左手腕
+LEFT_SHOULDER = 14  # 左肩
+LEFT_ELBOW = 15  # 左肘
 
-def test_deadlift_pose(train=False):
+
+def test_deadlift_pose(train=False,video_path='./demo/output/sample_video/'):
     result = ""
     try:
-        output_dir = "./demo/output/sample_video/"
+        output_dir = video_path
         keypoints_2d = np.load(os.path.join(output_dir, "input_2D", "keypoints.npz"), allow_pickle=True)[
             "reconstruction"
         ]
@@ -105,6 +119,19 @@ def test_deadlift_pose(train=False):
             finish_head_neck_navel_dot_product_data, finish_head_neck_navel_dot_product
         )
         arm_angle_data = np.append(arm_angle_data, arm_angle)
+        save_data(
+            feet_factor_data,
+            start_leg_barbell_distance_data,
+            heighest_leg_barbell_distance_data,
+            finish_leg_barbell_distance_data,
+            start_butt_navel_neck_dot_product_data,
+            heighest_butt_navel_neck_dot_product_data,
+            finish_butt_navel_neck_dot_product_data,
+            start_head_neck_navel_dot_product_data,
+            heighest_head_neck_navel_dot_product_data,
+            finish_head_neck_navel_dot_product_data,
+            arm_angle_data,
+        )
         return "训练数据已保存"
 
     # 计算均值

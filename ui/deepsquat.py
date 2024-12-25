@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-def test_squat_pose():
+def test_squat_pose(video_path='./demo/output/sample_video/'):
     """
     评估深蹲动作的标准程度。
     :param output_dir: 包含2D和3D关键点数据的输出目录。
@@ -9,7 +9,7 @@ def test_squat_pose():
     """
     # 加载2D和3D关键点数据
     try:
-        output_dir = './demo/output/sample_video/'
+        output_dir = video_path
         keypoints_2d = np.load(os.path.join(output_dir, 'input_2D', 'keypoints.npz'), allow_pickle=True)['reconstruction']
         keypoints_3d = np.load(os.path.join(output_dir, 'output_3D', 'output_keypoints_3d.npz'), allow_pickle=True)['reconstruction']
     except FileNotFoundError as e:
