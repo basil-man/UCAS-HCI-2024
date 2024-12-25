@@ -35,8 +35,8 @@ class Analysis:
     def __call__(self, mode,video_path):
         if mode == "硬拉":
             return deadlift_pose()
-        elif mode == "深蹲":
-            return deepsquat_pose(1)
+        elif mode == "deep_squat":
+            return deepsquat_pose()
         elif mode == "卧推":
             return benchpress_pose(0,video_path)
         else:
