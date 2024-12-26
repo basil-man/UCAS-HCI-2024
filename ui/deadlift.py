@@ -90,7 +90,7 @@ def test_deadlift_pose(train=False, video_path="./demo/output/square_vedio/"):
         start_head_neck_navel_dot_product_data,
         heighest_head_neck_navel_dot_product_data,
         finish_head_neck_navel_dot_product_data,
-        arm_angle,
+        arm_angle_data,
     ) = load_data()
 
     if train == True:

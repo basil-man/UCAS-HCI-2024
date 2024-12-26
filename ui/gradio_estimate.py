@@ -28,6 +28,7 @@ def read_video(video_path):
 
 # 调用姿态估计逻辑
 def estimate(video_path):
+    remove_folder()
     # 调用姿态估计，生成含关节标注的视频
     make_square(video_path, OUTPUT_VIDEO_PATH)
     output_path = estimator(OUTPUT_VIDEO_PATH)
