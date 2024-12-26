@@ -3,6 +3,9 @@ import os
 import shutil
 from main import PoseEstimation, Analysis
 from vedio_pad import make_square
+import threading
+import cv2
+import time
 
 # 创建核心逻辑的实例
 estimator = PoseEstimation()
@@ -46,7 +49,7 @@ def estimate(video_path):
 # 调用动作分析逻辑
 def analyze(video_path, mode):
     # 分析动作模式，返回文字结果
-    analysis_result = analyzer(mode)
+    analysis_result = analyzer(video_path,mode)
     if not analysis_result:
         return "Error: 动作分析失败。"
     return analysis_result
@@ -88,5 +91,6 @@ with gr.Blocks() as demo:
         inputs=[input_video, mode],
         outputs=[estimation, analysis],
     )
+
 
 demo.launch(share=True)
