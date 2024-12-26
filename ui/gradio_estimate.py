@@ -3,9 +3,8 @@ import os
 import shutil
 from main import PoseEstimation, Analysis
 from vedio_pad import make_square
-import threading
-import cv2
-import time
+import atexit
+from GPT_api import generate_prompt as generate_advice
 
 # 创建核心逻辑的实例
 estimator = PoseEstimation()
@@ -29,6 +28,7 @@ def read_video(video_path):
 
 # 调用姿态估计逻辑
 def estimate(video_path):
+    remove_folder()
     # 调用姿态估计，生成含关节标注的视频
     make_square(video_path, OUTPUT_VIDEO_PATH)
     output_path = estimator(OUTPUT_VIDEO_PATH)
@@ -55,8 +55,28 @@ def analyze(video_path, mode):
     return analysis_result
 
 
+def estimate_and_analyze(video_path, mode, gpt_analysis):
+    if not mode:
+        raise gr.Error("请选择动作模式后再进行动作分析。")
+    estimate(video_path)
+    analyze_result = analyze(video_path, mode)
+    if gpt_analysis:
+        gpt_result = generate_advice(mode, analyze_result)
+        return "./demo/output/square_vedio/square_vedio.mp4", analyze_result + "\n" + gpt_result
+    else:
+        return "./demo/output/square_vedio/square_vedio.mp4", analyze_result
+
+
+def remove_folder():
+    folder = "./demo/output/square_vedio/"
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+
+
+atexit.register(remove_folder)
+
 # Gradio 界面设计
-with gr.Blocks() as demo:
+with gr.Blocks(title="健身助手") as demo:
     gr.HTML(
         """
         <div style="display: flex; justify-content: center; align-items: center; text-align: center; 
@@ -72,10 +92,8 @@ with gr.Blocks() as demo:
     with gr.Row(equal_height=True):
         with gr.Column():
             input_video = gr.Video(format="mp4", label="上传视频")
-            mode = gr.Dropdown(
-                label="动作模式", 
-                choices=["卧推", "硬拉","深蹲"]
-            )
+            mode = gr.Dropdown(label="动作模式", choices=["卧推", "硬拉", "深蹲"])
+            gpt_analysis = gr.Checkbox(label="GPT分析", value=False)
             with gr.Row():
                 submit1 = gr.Button("姿态估计")
                 submit2 = gr.Button("动作分析")
@@ -87,10 +105,9 @@ with gr.Blocks() as demo:
     # 按钮点击逻辑
     submit1.click(fn=lambda video_path: estimate(video_path)[0], inputs=input_video, outputs=estimation)
     submit2.click(
-        fn=lambda video_path, mode: [estimate(video_path)[0], analyze(video_path, mode)],
-        inputs=[input_video, mode],
+        fn=estimate_and_analyze,
+        inputs=[input_video, mode, gpt_analysis],
         outputs=[estimation, analysis],
     )
 
-
-demo.launch(share=True)
+demo.launch(share=True, favicon_path="./ui/fig/logo.png")

@@ -3,7 +3,7 @@ import os
 from benchpress_data import save_data, load_data
 
 
-def test_benchpress_pose(train,video_path):
+def test_benchpress_pose(train=False, video_path="./demo/output/square_vedio/"):
     result = ""
     output_dir = video_path
     keypoints_2d = np.load(output_dir + "/input_2D/keypoints.npz", allow_pickle=True)["reconstruction"]
@@ -19,15 +19,14 @@ def test_benchpress_pose(train,video_path):
     for i in range(keypoints_3d.shape[0]):
         kpt = keypoints_3d[i, :, :]
         right_elbow_angle, left_elbow_angle = test_arm_straight(kpt)
-        if(right_elbow_angle + left_elbow_angle > right_elbow_angle_max + left_elbow_angle_max):
+        if right_elbow_angle + left_elbow_angle > right_elbow_angle_max + left_elbow_angle_max:
             highest_idx = i
             right_elbow_angle_max = right_elbow_angle
             left_elbow_angle_max = left_elbow_angle
-        if(right_elbow_angle + left_elbow_angle < right_elbow_angle_min + left_elbow_angle_min):
+        if right_elbow_angle + left_elbow_angle < right_elbow_angle_min + left_elbow_angle_min:
             finish_idx = i
             right_elbow_angle_min = right_elbow_angle
             left_elbow_angle_min = left_elbow_angle
-
 
     # print("highest_idx is ",highest_idx,"horizon_idx is ",horizon_idx)
     if highest_idx == -1 or finish_idx == -1:
@@ -35,7 +34,7 @@ def test_benchpress_pose(train,video_path):
 
     highesttime = keypoints_3d[highest_idx, :, :]
     finishtime = keypoints_3d[finish_idx, :, :]
-    
+
     # 输入hkpt和lkpt是二维数组，第一维为时间帧，第二维为坐标 (x, y, z)
     # x表示横向，右手为负，y表示纵向高度，越高值越小，z表示前后，越靠前值越小
     # print(hkpt)
@@ -58,7 +57,7 @@ def test_benchpress_pose(train,video_path):
         hand_track_data = np.append(hand_track_data, hand_track)
         save_data(elbow_angle_data, knee_angle_data, hand_eye_data, arm_angle_data, hand_track)
         return "训练数据已保存"
-    
+
     # 计算均值
     elbow_angle_mean = np.mean(elbow_angle_data)
     knee_angle_mean = np.mean(knee_angle_data)
@@ -77,27 +76,26 @@ def test_benchpress_pose(train,video_path):
     arm_angle_std = np.sqrt(arm_angle_var)
     hand_track_std = np.sqrt(hand_track_var)
 
-
     result = ""
 
     if elbow_angle < elbow_angle_mean - 3 * elbow_angle_std or elbow_angle > elbow_angle_mean + 3 * elbow_angle_std:
         if elbow_angle < 90:
-            result += "用户在卧推时，小臂与大臂呈锐角，可能导致肩关节的过度外旋，会增加肘关节的压力，且胸肌的激活会减少，三角肌和肩部的其他肌群可能会代偿发力。请尽量保持90度发力。"
+            result += "用户在卧推时，小臂与大臂呈锐角，可能导致肩关节的过度外旋，会增加肘关节的压力，且胸肌的激活会减少，三角肌和肩部的其他肌群可能会代偿发力。请尽量保持90度发力。\n"
         if elbow_angle > 90:
-            result += "用户在卧推时，小臂与大臂呈钝角，肩关节可能会处于一个相对不稳定的状态，增加肩关节的压力，且胸肌的激活会减少，三角肌和肱三头肌可能会代偿发力。请尽量保持90度发力。"
+            result += "用户在卧推时，小臂与大臂呈钝角，肩关节可能会处于一个相对不稳定的状态，增加肩关节的压力，且胸肌的激活会减少，三角肌和肱三头肌可能会代偿发力。请尽量保持90度发力。\n"
     if knee_angle < knee_angle_mean - 3 * knee_angle_std:
-        result += "用户在卧推时，膝盖弯曲角度过小，可能会导致下半身稳定性不足，膝盖角度过小会使得下半身的肌肉群（如股四头肌、臀肌等）无法有效地参与支撑，整个身体的稳定性降低，可能导致上半身发力不均衡，从而增加腰部和肩部的负担，进而增加受伤风险。同时由于卧推时需要控制杠铃的重力，腰椎处于一个较为紧张的状态，若下肢没有有效支撑，可能导致腰椎过度弯曲或腰部疼痛。"
+        result += "用户在卧推时，膝盖弯曲角度过小，可能会导致下半身稳定性不足，膝盖角度过小会使得下半身的肌肉群（如股四头肌、臀肌等）无法有效地参与支撑，整个身体的稳定性降低，可能导致上半身发力不均衡，从而增加腰部和肩部的负担，进而增加受伤风险。同时由于卧推时需要控制杠铃的重力，腰椎处于一个较为紧张的状态，若下肢没有有效支撑，可能导致腰椎过度弯曲或腰部疼痛。\n"
     elif knee_angle > knee_angle_mean + 3 * knee_angle_std:
-        result += "用户在卧推时，膝盖弯曲角度过大，臀部会被迫处于过度屈曲状态。这样会导致臀部肌肉参与过多的发力，从而可能导致臀部和下背部的过度紧张或疲劳,同时下肢的肌肉群（尤其是大腿和臀部）会过度用力，这可能会打乱下肢和上肢之间的协调性。在卧推时，正确的膝盖弯曲应当有助于传递力到上肢，而过度弯曲可能会干扰力量传递的流畅性，影响卧推的推力效率。"
+        result += "用户在卧推时，膝盖弯曲角度过大，臀部会被迫处于过度屈曲状态。这样会导致臀部肌肉参与过多的发力，从而可能导致臀部和下背部的过度紧张或疲劳,同时下肢的肌肉群（尤其是大腿和臀部）会过度用力，这可能会打乱下肢和上肢之间的协调性。在卧推时，正确的膝盖弯曲应当有助于传递力到上肢，而过度弯曲可能会干扰力量传递的流畅性，影响卧推的推力效率。\n"
     if hand_eye < hand_eye_mean - 3 * hand_eye_std or hand_eye > hand_eye_mean + 3 * hand_eye_std:
-        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。"
+        result += "用户在我卧推时，当杠铃处于最高点时，视线没有在杠铃正下方,视线的方向通常会影响头部和脖部的姿势。如果视线偏离杠铃，可能导致头部过度伸展或下压，这会影响颈部和脊柱的稳定性。长时间的不正确头部姿势可能引起脖部和背部的不适或疼痛。\n"
     if arm_angle > arm_angle_mean + 3 * arm_angle_std:
-        result += "用户在卧推时，双臂夹角过大会导致肩膀的外展角度过大，增加肩部关节的负担，尤其是肩关节前部的旋转袖肌群。这种姿势可能会导致肩部过度拉伸或受压，长期这样做容易引起肩部疼痛、炎症，甚至是肩袖撕裂等严重问题。如果双臂夹角过大，手肘过低，胸大肌的激活程度可能会减弱，因为胸肌在过度外展的情况下无法有效发挥作用。反而，三角肌和肩部的其他肌肉群会承担更多的压力，可能导致训练效果不理想，甚至造成肌肉不平衡。"
+        result += "用户在卧推时，双臂夹角过大会导致肩膀的外展角度过大，增加肩部关节的负担，尤其是肩关节前部的旋转袖肌群。这种姿势可能会导致肩部过度拉伸或受压，长期这样做容易引起肩部疼痛、炎症，甚至是肩袖撕裂等严重问题。如果双臂夹角过大，手肘过低，胸大肌的激活程度可能会减弱，因为胸肌在过度外展的情况下无法有效发挥作用。反而，三角肌和肩部的其他肌肉群会承担更多的压力，可能导致训练效果不理想，甚至造成肌肉不平衡。\n"
     if hand_track < hand_track_mean - 3 * hand_track_std or hand_track > hand_track_mean + 3 * hand_track_std:
-        result += "用户在卧推时，手臂应当保持一条弧线上下升，避免直上直下，当你在卧推时，手肘会略微向外扩展，形成一个自然的弧线，这有助于保持肩关节的安全和稳定。直上直下的动作会让肩关节过度承受压力，增加受伤风险。如果手臂直上直下，肩膀的内旋角度会过大，肩部的前侧肌肉（如肩袖）会过度受力。手臂弯曲并沿着弧线升降时，可以让肩部承受的压力更加均匀，从而避免因过度压迫造成肩关节的不适或损伤。手臂沿着弧线升降有助于更好地激活胸大肌。在直上直下的动作中，胸肌的参与度较低，更多的压力会被转移到肩膀和三头肌上。而弧线运动能够有效地让胸大肌承受更多的负荷，增强训练效果。"
+        result += "用户在卧推时，手臂应当保持一条弧线上下升，避免直上直下，当你在卧推时，手肘会略微向外扩展，形成一个自然的弧线，这有助于保持肩关节的安全和稳定。直上直下的动作会让肩关节过度承受压力，增加受伤风险。如果手臂直上直下，肩膀的内旋角度会过大，肩部的前侧肌肉（如肩袖）会过度受力。手臂弯曲并沿着弧线升降时，可以让肩部承受的压力更加均匀，从而避免因过度压迫造成肩关节的不适或损伤。手臂沿着弧线升降有助于更好地激活胸大肌。在直上直下的动作中，胸肌的参与度较低，更多的压力会被转移到肩膀和三头肌上。而弧线运动能够有效地让胸大肌承受更多的负荷，增强训练效果。\n"
 
     if result == "":
-        result += "用户卧推时挥臂动作标准，保持状态，继续训练，持续反馈！。"
+        result += "用户卧推时挥臂动作标准，保持状态，继续训练，持续反馈！。\n"
     return result
 
 
@@ -231,4 +229,3 @@ def test_hand_track(highest_idx, finish_idx, keypoints_3d):
     magnitude = np.linalg.norm(finish_middle_hand - highest_middle_hand)
     distance = np.sin(angle) * magnitude
     return abs(distance) / abs(body_length)
-
