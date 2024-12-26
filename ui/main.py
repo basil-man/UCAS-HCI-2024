@@ -32,13 +32,13 @@ class PoseEstimation:
 class Analysis:
     """Performs analysis based on mode."""
 
-    def __call__(self, mode,video_path):
+    def __call__(self, mode):
         if mode == "硬拉":
             return deadlift_pose()
         elif mode == "deep_squat":
             return deepsquat_pose()
         elif mode == "卧推":
-            return benchpress_pose(0,video_path)
+            return benchpress_pose()
         else:
             return test_block_pose()
 
@@ -49,7 +49,7 @@ def analyze_video(video_path, mode):
     output_path = pose_estimation(video_path)
     directory = os.path.dirname(output_path)
     analysis = Analysis()
-    return analysis(mode,directory)
+    return analysis(mode, directory)
 
 
 # Main script execution
@@ -60,7 +60,6 @@ if __name__ == "__main__":
     parser.add_argument("--video", type=str, default="./demo/video/sample_video.mp4", help="Path to the input video")
     parser.add_argument("--api", type=bool, default=False, help="Whether to use the GPT-4 API for analysis")
     args = parser.parse_args()
-
 
     # Start processing
     print("Starting pose estimation and analysis...")

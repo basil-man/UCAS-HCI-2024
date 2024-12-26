@@ -1,4 +1,4 @@
-# MHFormer: Multi-Hypothesis Transformer for 3D Human Pose Estimation [CVPR 2022]
+# 基于MHFormer的健身助手[UCAS HCI 2024]
 
 ![zhu](figure/zhu.gif)
 

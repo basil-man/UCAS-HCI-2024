@@ -31,7 +31,7 @@ def generate_prompt(action, oral_advice, max_retries=3):
                 messages=[
                     {
                         "role": "system",
-                        "content": "Only return content directly as requested. 所有的回复全都用中文",
+                        "content": "只回复你的建议，不要回复类似“当然可以”的话。所有的回复全都用中文",
                     },
                     {"role": "user", "content": prompt_description},
                 ],
@@ -41,7 +41,7 @@ def generate_prompt(action, oral_advice, max_retries=3):
                 presence_penalty=0.5,  # 鼓励生成新的内容
             )
 
-            return response.choices[0].message.content.strip()
+            return "[GPT建议]:\n" + response.choices[0].message.content.strip()
 
         except Exception as e:
             print(f"Error generating advice for {action}: {e}")

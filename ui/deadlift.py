@@ -31,7 +31,7 @@ LEFT_SHOULDER = 14  # 左肩
 LEFT_ELBOW = 15  # 左肘
 
 
-def test_deadlift_pose(train=False,video_path='./demo/output/sample_video/'):
+def test_deadlift_pose(train=False, video_path="./demo/output/square_vedio/"):
     result = ""
     try:
         output_dir = video_path
