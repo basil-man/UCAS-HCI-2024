@@ -35,7 +35,7 @@ class Analysis:
     def __call__(self, mode):
         if mode == "硬拉":
             return deadlift_pose()
-        elif mode == "deep_squat":
+        elif mode == "深蹲":
             return deepsquat_pose()
         elif mode == "卧推":
             return benchpress_pose()
@@ -56,7 +56,7 @@ def analyze_video(video_path, mode):
 if __name__ == "__main__":
     # Command-line argument parsing
     parser = argparse.ArgumentParser(description="Pose Estimation Analysis")
-    parser.add_argument("mode", type=str, help="The mode of analysis (e.g., 硬拉, deep_squat, 卧推)")
+    parser.add_argument("mode", type=str, help="The mode of analysis (e.g., 硬拉, 深蹲, 卧推)")
     parser.add_argument("--video", type=str, default="./demo/video/sample_video.mp4", help="Path to the input video")
     parser.add_argument("--api", type=bool, default=False, help="Whether to use the GPT-4 API for analysis")
     args = parser.parse_args()
