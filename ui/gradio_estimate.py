@@ -5,6 +5,10 @@ from main import PoseEstimation, Analysis
 from vedio_pad import make_square
 import atexit
 from GPT_api import generate_prompt as generate_advice
+import cv2
+import threading
+import time
+import queue
 
 # 创建核心逻辑的实例
 estimator = PoseEstimation()
@@ -14,7 +18,7 @@ analyzer = Analysis()
 UPLOAD_DIR = "./demo/video/"
 OUTPUT_VIDEO_PATH = "./ui/cache/square_vedio.mp4"
 OUTPUT_DIR = "./demo/output/sample_video/"
-
+REALTIME_VIDEO_PATH = os.path.join(UPLOAD_DIR, "realtime_video.mp4")
 
 # 处理上传视频
 def read_video(video_path):
@@ -49,7 +53,7 @@ def estimate(video_path):
 # 调用动作分析逻辑
 def analyze(video_path, mode):
     # 分析动作模式，返回文字结果
-    analysis_result = analyzer(mode)
+    analysis_result = analyzer(video_path,mode)
     if not analysis_result:
         return "Error: 动作分析失败。"
     return analysis_result
@@ -75,6 +79,95 @@ def remove_folder():
 
 atexit.register(remove_folder)
 
+# 实时视频录制功能
+recording = False
+cap = None
+out = None
+
+def start_recording(mode):
+    global recording, cap, out
+    recording = True
+    cap = cv2.VideoCapture(0)  
+    if not cap.isOpened():
+        print("Error: Could not open video capture.")
+    frame_width = int(cap.get(3))
+    frame_height = int(cap.get(4))
+    out = cv2.VideoWriter(REALTIME_VIDEO_PATH, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (frame_width, frame_height))
+    threading.Thread(target=save_video_segments).start(mode)
+    threading.Thread(target=record_video).start()
+
+def stop_recording():
+    global recording, cap, out
+    recording = False
+    if cap:
+        cap.release()
+    if out:
+        out.release()
+    cv2.destroyAllWindows()
+
+def save_video_segments(mode):
+    global segment_index,recording
+    while recording:
+        time.sleep(10)  # 每隔10秒执行一次
+        cap = cv2.VideoCapture(REALTIME_VIDEO_PATH)
+        if not cap.isOpened():
+            print("Error: Could not open video file.")
+            continue
+        
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        duration = frame_count / fps
+        
+        start_time = max(0, duration - 10)  # 计算开始时间，确保不超过视频长度
+        start_frame = int(start_time * fps)
+        
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        
+        frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        
+        segment_path = f'realtime_video_segment_{segment_index}.mp4'
+        out = cv2.VideoWriter(segment_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frame_width, frame_height))
+        segment_index += 1
+        
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+            out.write(frame)
+        
+        cap.release()
+        out.release()
+        
+        # 处理保存的视频片段
+        return estimate_and_analyze(segment_path, mode, True)
+        
+
+def record_video():
+    global recording, cap, out
+    while recording:
+        ret, frame = cap.read()
+        print(ret)
+        if ret:
+            out.write(frame)
+            cv2.imshow('Recording', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            break
+    stop_recording()
+
+def periodic_output(output_queue):
+    while True:
+        time.sleep(10)  # 每隔10秒输出一次
+        output_queue.put("定期输出的结果")
+
+def update_ui(output_queue):
+    results = []
+    while not output_queue.empty():
+        results.append(output_queue.get())
+    return results
+
 # Gradio 界面设计
 with gr.Blocks(title="健身助手") as demo:
     gr.HTML(
@@ -97,10 +190,14 @@ with gr.Blocks(title="健身助手") as demo:
             with gr.Row():
                 submit1 = gr.Button("姿态估计")
                 submit2 = gr.Button("动作分析")
+            with gr.Row():
+                start_button = gr.Button("开始录制")
+                stop_button = gr.Button("停止录制")
 
         with gr.Column():
             estimation = gr.Video(label="姿态估计结果", autoplay=True)
             analysis = gr.Textbox(label="分析结果")
+            periodic_output_component = gr.Textbox(label="实时分析结果")
 
     # 按钮点击逻辑
     submit1.click(fn=lambda video_path: estimate(video_path)[0], inputs=input_video, outputs=estimation)
@@ -109,5 +206,10 @@ with gr.Blocks(title="健身助手") as demo:
         inputs=[input_video, mode, gpt_analysis],
         outputs=[estimation, analysis],
     )
+
+    start_button.click(fn=start_recording, inputs=mode, outputs=None)
+    stop_button.click(fn=stop_recording, inputs=None, outputs=None)
+
+    demo.load(fn=update_ui, inputs=None, outputs=periodic_output_component, every=10)
 
 demo.launch(share=True, favicon_path="./ui/fig/logo.png")
